@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+dfde871d9508b5e1ff7231b848977d39 CMakeFiles/tsnocpp.desktop
+6789a1ae6b2e34bebbef1e1451102bf4 po/CMakeFiles/tsnocpp.girish.pot
