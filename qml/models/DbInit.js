@@ -2,7 +2,7 @@
 
 /* Name: initializeDatabase
 * This function will initialize database table structure
-* Table structure is structured as following:
+* Table structure is as following:
 * users -> for Odoo instances
 * project_project_app -> for Projects
 * project_task_app -> for Tasks
