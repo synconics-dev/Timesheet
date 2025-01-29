@@ -1,8 +1,0 @@
-/./manifest.json
-//tsnocpp.apparmor
-//assets/time_management_logo_4_3.jpg
-//assets/logo.svg
-//qml/time_management_logo_4_3.jpg
-//qml/Main.qml
-//qml/Backend.js
-//tsnocpp.desktop

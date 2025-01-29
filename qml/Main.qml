@@ -27,7 +27,9 @@ import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
 import QtCharts 2.0
 import QtQuick.Layouts 1.11
-import "Backend.js" as Backend 
+import "../models/Main.js" as Model
+import "../models/DbInit.js" as DbInit
+import "../models/DemoData.js" as DemoData
 
 
 MainView {
@@ -85,8 +87,10 @@ MainView {
                 }
             }
                 Component.onCompleted: {
-                    Backend.welcome()
-                    chart.timecat = Backend.getCategoryTime()
+                    DbInit.initializeDatabase();
+                    DemoData.record_demo_data();
+                    var quadrant_data = Model.get_quadrant_difference();
+                    chart.timecat = quadrant_data;
                 }
         } 
 
