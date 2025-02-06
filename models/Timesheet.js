@@ -1,286 +1,168 @@
-function initializeDatabase() {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
+.import QtQuick.LocalStorage 2.7 as Sql
 
-    db.transaction(function(tx) {
-        
-        tx.executeSql('CREATE TABLE IF NOT EXISTS users (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            name TEXT NOT NULL,\
-            link TEXT NOT NULL,\
-            last_modified datetime,\
-            database TEXT NOT NULL,\
-            connectwith_id INTEGER,\
-            api_key TEXT,\
-            username TEXT NOT NULL\
-        )');
+/* Name: get_accounts_list
+* This function will return accounts which are linked to Odoo
+*/
 
-    });
-}
-
-function insertData(name, link, database, username, selectedconnectwithId, apikey) {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
-
-    db.transaction(function(tx) {
-        var result = tx.executeSql('SELECT id, COUNT(*) AS count FROM users WHERE link = ? AND database = ? AND username = ?', [link, database, username]);
-        if (result.rows.item(0).count === 0) {
-            var api_key_text = ' ';
-            if (selectedconnectwithId == 1) {
-                api_key_text = apikey;
-            }
-            tx.executeSql('INSERT INTO users (name, link, database, username, connectwith_id, api_key) VALUES (?, ?, ?, ?, ?, ?)', [name, link, database, username, selectedconnectwithId, api_key_text]);
-            var newResult = tx.executeSql('SELECT id FROM users WHERE link = ? AND database = ? AND username = ?', [link, database, username]);
-            currentUserId = newResult.rows.item(0).id;
-        } else {
-            currentUserId = result.rows.item(0).id;
-        }
-    });
-}
-
-function queryData() {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
-
-    db.transaction(function(tx) {
-        var result = tx.executeSql('SELECT * FROM users');
-        accountsList = [];
-        for (var i = 0; i < result.rows.length; i++) {
-            accountsList.push({'user_id': result.rows.item(i).id, 'name': result.rows.item(i).name, 'link': result.rows.item(i).link, 'database': result.rows.item(i).database, 'username': result.rows.item(i).username})
-        }
-    });
-    selectedconnectwithId = 1;
-    connectwith.text = 'Connect With Api Key'
-}
-
-function prepare_database() {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
-
-    db.transaction(function(tx) {
-        tx.executeSql('CREATE TABLE IF NOT EXISTS users (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            name TEXT NOT NULL,\
-            link TEXT NOT NULL,\
-            last_modified datetime,\
-            database TEXT NOT NULL,\
-            connectwith_id INTEGER,\
-            api_key TEXT,\
-            username TEXT NOT NULL\
-        )');
-    });
-
-    db.transaction(function(tx) {
-        
-        tx.executeSql('CREATE TABLE IF NOT EXISTS project_project_app (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            name TEXT NOT NULL,\
-            account_id INTEGER,\
-            parent_id INTEGER,\
-            planned_start_date date,\
-            planned_end_date date,\
-            allocated_hours FLOAT,\
-            favorites INTEGER,\
-            last_update_status TEXT,\
-            description TEXT,\
-            last_modified datetime,\
-            color_pallet TEXT,\
-            odoo_record_id INTEGER,\
-            FOREIGN KEY (account_id) REFERENCES users(id) ON DELETE CASCADE,\
-            FOREIGN KEY (parent_id) REFERENCES project_project_app(id) ON DELETE CASCADE\
-        )');
-    });
-
-    db.transaction(function(tx) {
-        tx.executeSql('CREATE TABLE IF NOT EXISTS res_users_app (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            account_id INTEGER,\
-            name Text,\
-            share INTEGER,\
-            active INTEGER,\
-            odoo_record_id INTEGER,\
-            FOREIGN KEY (account_id) REFERENCES users(id) ON DELETE CASCADE\
-        )');
-    });
-
-    db.transaction(function(tx) {
-        
-        tx.executeSql('CREATE TABLE IF NOT EXISTS project_task_app (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            name TEXT NOT NULL,\
-            account_id INTEGER,\
-            project_id INTEGER,\
-            sub_project_id INTEGER,\
-            parent_id INTEGER,\
-            start_date date,\
-            end_date date,\
-            deadline date,\
-            initial_planned_hours FLOAT,\
-            favorites INTEGER,\
-            state TEXT,\
-            description TEXT,\
-            last_modified datetime,\
-            user_id INTEGER,\
-            odoo_record_id INTEGER,\
-            FOREIGN KEY (account_id) REFERENCES users(id) ON DELETE CASCADE,\
-            FOREIGN KEY (project_id) REFERENCES project_project_app(id) ON DELETE CASCADE,\
-            FOREIGN KEY (sub_project_id) REFERENCES project_project_app(id) ON DELETE CASCADE,\
-            FOREIGN KEY (user_id) REFERENCES res_users_app(id) ON DELETE CASCADE,\
-            FOREIGN KEY (parent_id) REFERENCES project_task_app(id) ON DELETE CASCADE\
-        )');
-    });
-
-    db.transaction(function(tx) {
-        
-        tx.executeSql('CREATE TABLE IF NOT EXISTS account_analytic_line_app (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            account_id INTEGER,\
-            project_id INTEGER,\
-            sub_project_id INTEGER,\
-            task_id INTEGER,\
-            sub_task_id INTEGER,\
-            name TEXT,\
-            unit_amount FLOAT,\
-            last_modified datetime,\
-            quadrant_id INTEGER,\
-            record_date date,\
-            odoo_record_id INTEGER,\
-            FOREIGN KEY (account_id) REFERENCES users(id) ON DELETE CASCADE,\
-            FOREIGN KEY (project_id) REFERENCES project_project_app(id) ON DELETE CASCADE,\
-            FOREIGN KEY (task_id) REFERENCES project_task_app(id) ON DELETE CASCADE\
-        )');
-    });
-
-    db.transaction(function(tx) {
-        tx.executeSql('CREATE TABLE IF NOT EXISTS mail_activity_type_app (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            account_id INTEGER,\
-            name TEXT,\
-            odoo_record_id INTEGER,\
-            FOREIGN KEY (account_id) REFERENCES users(id) ON DELETE CASCADE\
-        )');
-    });
-
-    db.transaction(function(tx) {
-        
-        tx.executeSql('CREATE TABLE IF NOT EXISTS mail_activity_app (\
-            id INTEGER PRIMARY KEY AUTOINCREMENT,\
-            account_id INTEGER,\
-            activity_type_id INTEGER,\
-            summary TEXT,\
-            due_date DATE,\
-            user_id INTEGER,\
-            notes TEXT,\
-            odoo_record_id INTEGER,\
-            last_modified datetime,\
-            link_id INTEGER,\
-            project_id INTEGER,\
-            task_id INTEGER,\
-            resId INTEGER,\
-            resModel TEXT,\
-            state TEXT,\
-            FOREIGN KEY (account_id) REFERENCES users(id) ON DELETE CASCADE,\
-            FOREIGN KEY (user_id) REFERENCES res_users_app(id) ON DELETE CASCADE,\
-            FOREIGN KEY (activity_type_id) REFERENCES mail_activity_type_app(id) ON DELETE CASCADE\
-            FOREIGN KEY (project_id) REFERENCES project_project_app(id) ON DELETE CASCADE,\
-            FOREIGN KEY (task_id) REFERENCES project_task_app(id) ON DELETE CASCADE\
-        )');
-    });
-}
-
-function accountlistDataGet(){
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
+function get_accounts_list() {
+    var db = Sql.LocalStorage.openDatabaseSync("timemanagement", "1.0", "Time Management", 1000000);
     var accountlist = [];
-
     db.transaction(function(tx) {
-            var result = tx.executeSql('SELECT * FROM users');
-            for (var i = 0; i < result.rows.length; i++) {
-                accountlist.push({'id': result.rows.item(i).id, 'name': result.rows.item(i).name})
-            }
-        })
-    return accountlist
-
+        var accounts = tx.executeSql('SELECT * FROM users');
+        for (var account = 0; account < accounts.rows.length; account++) {
+            accountlist.push({'id': accounts.rows.item(account).id,
+                             'name': accounts.rows.item(account).name});
+        }
+    });
+    return accountlist;
 }
 
-function fetch_projects(selectedAccountUserId) {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
-    var projectList = []
+/* Name: fetch_projects
+* This function will return projects based on Odoo account and work state
+* instance_id -> id of users table
+* is_work_state -> in case of work mode is enable
+*/
+
+function fetch_projects(instance_id, is_work_state) {
+    var db = Sql.LocalStorage.openDatabaseSync("timemanagement", "1.0", "Time Management", 1000000);
+    var projectList = [];
     db.transaction(function(tx) {
-        if(workpersonaSwitchState){
-            var result = tx.executeSql('SELECT * FROM project_project_app WHERE account_id = ? AND parent_id IS 0', [selectedAccountUserId]);
-        }else{
-            var result = tx.executeSql('SELECT * FROM project_project_app WHERE id != ? AND account_id IS NULL AND parent_id IS 0', [selectedAccountUserId]);
+        if (is_work_state) {
+            var projects = tx.executeSql('SELECT * FROM project_project_app\
+             WHERE account_id = ? AND parent_id IS 0', [instance_id]);
+        } else {
+            var projects = tx.executeSql('SELECT * FROM project_project_app\
+             WHERE account_id IS NULL');
         }
-        for (var i = 0; i < result.rows.length; i++) {
-            var child_projects = tx.executeSql('SELECT count(*) as count FROM project_project_app where parent_id = ?', [result.rows.item(i).id]);
-            projectList.push({'id': result.rows.item(i).id, 'name': result.rows.item(i).name, 'projectkHasSubProject': true ? child_projects.rows.item(0).count > 0 : false})
+        for (var project = 0; project < projects.rows.length; project++) {
+            var child_projects = tx.executeSql('SELECT count(*) as count FROM project_project_app\
+             where parent_id = ?', [projects.rows.item(project).id]);
+            projectList.push({'id': projects.rows.item(project).id,
+                             'name': projects.rows.item(project).name,
+                             'projectHasSubProject': true ? child_projects.rows.item(0).count > 0 : false});
         }
-    })
+    });
     return projectList;
 }
 
-function fetch_sub_project(project_id) {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
-    var subProjectsList = []
+/* Name: fetch_sub_project
+* This function will return sub projects based on given project's id
+* project_id -> id from project_project_app table
+* is_work_state -> in case of work mode is enable
+*/
+
+function fetch_sub_project(project_id, is_work_state) {
+    var db = Sql.LocalStorage.openDatabaseSync("timemanagement", "1.0", "Time Management", 1000000);
+    var subProjectsList = [];
     db.transaction(function(tx) {
-        if(workpersonaSwitchState){
-            var child_projects = tx.executeSql('SELECT * FROM project_project_app where parent_id = ?', [project_id]);
-        }else{
-            var child_projects = tx.executeSql('SELECT * FROM project_project_app where account_id IS NULL AND parent_id = ?', [project_id]);
+        if (is_work_state) {
+            var sub_projects = tx.executeSql('SELECT * FROM project_project_app\
+                                where parent_id = ?', [project_id]);
+        } else {
+            var sub_projects = tx.executeSql('SELECT * FROM project_project_app\
+                                where account_id IS NULL AND parent_id = ?', [project_id]);
         }
-        for (var i = 0; i < child_projects.rows.length; i++) {
-            subProjectsList.push({'id': child_projects.rows.item(i).id, 'name': child_projects.rows.item(i).name})
+        for (var sub_project = 0; sub_project < sub_projects.rows.length; sub_project++) {
+            subProjectsList.push({'id': sub_projects.rows.item(sub_project).id,
+                                 'name': sub_projects.rows.item(sub_project).name});
         }
-    })
+    });
     return subProjectsList;
 }
 
-function fetch_tasks_list(project_id, sub_project_id) {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
-    var tasks_list = []
+/* Name: fetch_tasks_list
+* This function will return tasks list
+* project_id -> id from project_project_app table
+* sub_project_id -> id from project_project_app table
+* is_work_state -> in case of work mode is enable
+*/
+
+function fetch_tasks_list(project_id, sub_project_id, is_work_state) {
+    var db = Sql.LocalStorage.openDatabaseSync("timemanagement", "1.0", "Time Management", 1000000);
+    var tasks_list = [];
     db.transaction(function(tx) {
-        if(workpersonaSwitchState){
-            var result = tx.executeSql('SELECT * FROM project_task_app where project_id = ? AND account_id != 0 AND sub_project_id = ?', [project_id, sub_project_id]);
-        }else{
-            var result = tx.executeSql('SELECT * FROM project_task_app where account_id = 0 AND project_id = ? AND sub_project_id = ?', [project_id, sub_project_id]);
+        if (is_work_state) {
+            var tasks = tx.executeSql('SELECT * FROM project_task_app\
+                                 where project_id = ? AND account_id != 0 AND sub_project_id = ?',
+                                [project_id, sub_project_id]);
+        } else {
+            var tasks = tx.executeSql('SELECT * FROM project_task_app\
+                                     where account_id is NULL \
+                                     AND project_id = ? \
+                                     ',
+                                     [project_id]);
         }
-        for (var i = 0; i < result.rows.length; i++) {
-            var child_tasks = tx.executeSql('SELECT count(*) as count FROM project_task_app where parent_id = ?', [result.rows.item(i).id]);
-            
-            tasks_list.push({'id': result.rows.item(i).id, 'name': result.rows.item(i).name, 'taskHasSubTask': true ? child_tasks.rows.item(0).count > 0 : false,'parent_id':result.rows.item(i).parent_id})
+        for (var task = 0; task < tasks.rows.length; task++) {
+            var child_tasks = tx.executeSql('SELECT count(*) as count FROM project_task_app\
+                                             where parent_id = ?',
+                                             [tasks.rows.item(task).id]);
+            tasks_list.push({'id': tasks.rows.item(task).id,
+                         'name': tasks.rows.item(task).name,
+                         'taskHasSubTask': true ? child_tasks.rows.item(0).count > 0 : false,
+                         'parent_id':tasks.rows.item(task).parent_id});
         }
-    })
+    });
     return tasks_list;
 }
 
-function fetch_sub_tasks(task_id) {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
-    
-    var sub_tasks_list = []
+/* Name: fetch_sub_tasks
+* This function will return sub tasks list based on given id of the task
+* task_id -> id of project_task_app table
+* is_work_state -> in case of work mode is enable
+*/
+
+function fetch_sub_tasks(task_id, is_work_state) {
+    var db = Sql.LocalStorage.openDatabaseSync("timemanagement", "1.0", "Time Management", 1000000);
+    var sub_tasks_list = [];
     db.transaction(function(tx) {
-        if(workpersonaSwitchState){
-            var child_tasks = tx.executeSql('SELECT * FROM project_task_app where parent_id = ?', [task_id]);
-        }else{
-            var child_tasks = tx.executeSql('SELECT * FROM project_task_app where account_id IS NULL AND parent_id = ?', [task_id]);
+        if (is_work_state) {
+            var sub_tasks = tx.executeSql('SELECT * FROM project_task_app\
+                                         where parent_id = ?', [task_id]);
+        } else {
+            var sub_tasks = tx.executeSql('SELECT * FROM project_task_app\
+                                         where account_id IS NULL AND parent_id = ?',
+                                         [task_id]);
         }
-        for (var i = 0; i < child_tasks.rows.length; i++) {
-            sub_tasks_list.push({'id': child_tasks.rows.item(i).id, 'name': child_tasks.rows.item(i).name})
+        for (var sub_task = 0; sub_task < sub_tasks.rows.length; sub_task++) {
+            sub_tasks_list.push({'id': sub_tasks.rows.item(sub_task).id,
+                             'name': sub_tasks.rows.item(sub_task).name});
         }
-    })
-    return sub_tasks_list
+    });
+    return sub_tasks_list;
 }
 
-function timesheetData(data) {
-    var db = LocalStorage.openDatabaseSync("myDatabase", "1.0", "My Database", 1000000);
+/* Name: convert_time
+* This function will return formatted time HH:MM
+* value -> string
+*/
+
+function convert_time(value) {
+    var vals = value.split(':');
+    var hours = parseInt(vals[0], 10);
+    var minutes = parseInt(vals[1], 10);
+    hours += Math.floor(minutes / 60);
+    minutes = minutes % 60;
+    return hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+}
+
+/* Name: create_timesheet
+* This function will create timesheet based on passed data
+* data -> object of details related to timesheet entry
+*/
+
+function create_timesheet(data) {
+    var db = Sql.LocalStorage.openDatabaseSync("timemanagement", "1.0", "Time Management", 1000000);
     db.transaction(function(tx) {
-        var unitAmount = 0
+        var unitAmount = 0;
         if (data.isManualTimeRecord) {
-            unitAmount = convTimeFloat(data.manualSpentHours)
+            unitAmount = convert_time(data.manualSpentHours);
         } else {
-            unitAmount = convTimeFloat(data.spenthours)
+            unitAmount = convert_time(data.spenthours);
         }
         tx.executeSql('INSERT INTO account_analytic_line_app \
             (account_id, record_date, project_id, task_id, name, sub_project_id, sub_task_id, quadrant_id,  \
             unit_amount, last_modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-             [data.instance_id, data.dateTime, data.project, data.task, data.description, data.subprojectId, data.subTask, data.quadrant, unitAmount, new Date().toISOString()]);
-
-        datesmartBtnStart = ""
+             [data.instance_id, data.dateTime, data.project, data.task, data.description, data.subprojectId,
+              data.subTask, data.quadrant, unitAmount, new Date().toISOString()]);
     });
-
 }
