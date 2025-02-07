@@ -56,7 +56,6 @@ MainView {
         }
 
     function isDesktop() {
-        console.log('\n\n function isDesktop()')
         if(Screen.width > 1300 ){
             if(Screen.width > 2000 && Screen.height < 1300){
                 return false;
@@ -86,6 +85,7 @@ MainView {
         Component {
             id: timesheet
             Timesheet {
+                isBottomEdge: false
             }
         }
 
@@ -108,33 +108,8 @@ MainView {
                         title: i18n.tr('TimeSheet')
                     }
 
-                    Dialog {
+                    NavigationDialog {
                         id: navigationDialog
-                        title: "Menu"
-                        modal: true
-
-                        contentItem: Column {
-                            spacing: units.gu(2)
-                            width: parent.width
-                            anchors.centerIn: parent
-                            anchors.top: header.bottom
-
-                            Button {
-                                text: "Dashboard"
-                                onClicked: {
-                                    stackView.push(dashboard)
-                                    navigationDialog.close()
-                                }
-                            }
-
-                            Button {
-                                text: "Timesheet"
-                                onClicked: {
-                                    stackView.push(timesheet)
-                                    navigationDialog.close()
-                                }
-                            }
-                        }
                     }
 
                     Rectangle {
@@ -374,6 +349,7 @@ MainView {
                         height: units.gu(110)
                         hint.text: "Add Timesheet"
                         contentComponent: Timesheet {
+                            isBottomEdge: true
                         }
                     }
 
