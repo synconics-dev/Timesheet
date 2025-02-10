@@ -31,53 +31,18 @@ Page {
     height: units.gu(110)
     title: "Add Timesheet"
 
-    property var optionList: []
-    property var tasksList: []
+    property bool isBottomEdge: false
     property var taskssmartBtn: null
     property int elapsedTime: 0
-    property int selectedquadrantId: 4
-    property int selectededitquadrantId: 0
     property int selectedProjectId: 0
-    property int editselectedProjectId: 0
-    property int selectedSubProjectId: 0
-    property int selectededitSubProjectId: 0
     property int selectedTaskId: 0 
-    property int editselectedTaskId: 0 
-    property int selectedSubTaskId: 0
-    property int selectededitSubTaskId: 0
-    property int selectedAccountUserId: 0
     property bool running: false
-    property bool hasSubProject: false;
-    property bool edithasSubProject: false;
-    property bool hasSubTask: false;
-    property bool edithasSubTask: false;
-    property string selected_username: ""
-    property bool isTimesheetSaved: false
-    property bool isTimesheetClicked: false
     property bool isManualTime: false
     property var currentTime: false
     property int storedElapsedTime: 0
-    property var timesheetList: []
-    property int currentUserId: 0
-    property var timesheetListobject: []
     property bool workpersonaSwitchState: false
-    property bool penalOpen: true
-    property bool headermainOpen: true
-    property int selectedId: -1
-    property bool isTimesheetEdit: false
-    property bool isEditTimesheetClicked: false
-    property bool issearchHeadermain: false 
     property bool timestart: false 
     property int idstarttime: 0
-
-    property string selectedQuadrantText: ""
-    property string accountInputText: ""
-    property string projectInputText: ""
-    property string subProjectInputText: ""
-    property string taskInputText: ""
-    property string subTaskInputText: ""
-    property string descriptionInputText: ""
-    property string datesmartBtnStart: ""
 
     Timer {
         id: stopwatchTimer
@@ -91,7 +56,7 @@ Page {
     function formatTime(seconds) {
         var hours = Math.floor(seconds / 3600);  
         var minutes = Math.floor((seconds % 3600) / 60);  
-        var secs = seconds % 60; 
+        var secs = seconds % 60;
 
         return (hours < 10 ? "0" + hours : hours) + ":" +  
             (minutes < 10 ? "0" + minutes : minutes) + ":" +
@@ -172,9 +137,16 @@ Page {
         leadingActionBar.actions: [
             Action {
                 iconName: "down"
-                // onTriggered: stackView.push(dashboard)
+                visible: isBottomEdge && isBottomEdge.opened
                 onTriggered: {
                     bottomEdge.collapse();
+                }
+            },
+            Action {
+                iconName: "navigation-menu"
+                visible: !isBottomEdge
+                onTriggered: {
+                    navigationDialog.open();
                 }
             }
         ]
@@ -191,12 +163,16 @@ Page {
         ]
     }
 
+    NavigationDialog {
+        id: navigationDialog
+    }
+
     Label {
         id: saveMessage
         text: "Saved Successfully!"
         color: "green"
         visible: false
-        anchors.top: parent.top
+        anchors.top: pageHeader.bottom
         anchors.margins: 60
         anchors.horizontalCenter: parent.horizontalCenter
     }
@@ -212,6 +188,8 @@ Page {
         }
     }
 
+    
+
     Rectangle {
         width: Screen.desktopAvailableWidth < units.gu(130) ? units.gu(45) : units.gu(130)
         height: parent.height
@@ -220,242 +198,255 @@ Page {
         color: "#ffffff"
         anchors.margins: 100
         id: list_id
-
-        Rectangle {
-            id: date_selection
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            Label {
-                id: date_label
-                text: "Date"
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.topMargin: 50
-            }
-            DatePicker {
-                id: date_field
-                anchors.top: date_label.bottom
-                minimum: {
-                    var d = new Date();
-                    d.setFullYear(d.getFullYear() - 1);
-                    return d;
-                }
-                maximum: Date.prototype.getInvalidDate.call()
-            }
-
-            Label {
-                id: project_label
-                text: "Project"
-                anchors.topMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: date_field.bottom
-            }
-
-            ComboButton {
-                id: project_field
-                text: "Select Project"
-                width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: project_label.bottom
-                ListView {
-                    id: list
-
-                    model: projectModel
-                    delegate: ItemDelegate {
-                        id: projectInfo 
-                        width: parent.width
-                        text: model.name
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                project_field.text = model.name
-                                selectedProjectId = model.id
-                                prepare_task_list(selectedProjectId)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Label {
-                id: task_label
-                text: "Task"
-                anchors.topMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: project_field.bottom
-            }
-            ComboButton {
-                id: task_field
-                text: "Select Task"
-                width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: task_label.bottom
-                ListView {
-                    id: task_list
-                    // width: 18
-
-                    model: taskModel
-                    delegate: ItemDelegate {
-                        id: taskInfo
-                        width: parent.width 
-                        text: model.name
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                task_field.text = model.name
-                                selectedTaskId = model.id
-                            }
-                        }
-                    }
-                }
-            }
-
-            Label {
-                id: description_label
-                text: "Description"
-                anchors.topMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: task_field.bottom
-            }
-            TextField {
-                id: description_field
-                width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: description_label.bottom
-            }
-
-            Label {
-                id: spent_hours_label
-                text: "Spent Hours"
-                anchors.topMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: description_field.bottom
-            }
-
-            TextField {
-                id: spent_hours_auto_field
-                width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: spent_hours_label.bottom
-                text: formatTime(elapsedTime)
-                readOnly: true
-                visible: !isManualTime
-                validator: RegExpValidator { regExp: /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/ }
-            }
-
-            TextField {
-                id: spent_hours_manual_field
-                width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: spent_hours_label.bottom
-                text: formatTime(elapsedTime)
-                visible: isManualTime
-                validator: RegExpValidator { regExp: /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/ }
-            }
+        Flickable {
+            id: flickableContent
+            anchors.fill: parent
+            height: parent.height - pageHeader.height
+            anchors.top: pageHeader.bottom
+            contentWidth: parent.width
+            contentHeight: units.gu(130)
+            clip: true
+            flickableDirection: Flickable.VerticalFlick
 
             Rectangle {
-                anchors.top: spent_hours_manual_field.bottom
-                anchors.topMargin: 30
-                anchors.left: spent_hours_manual_field.left
-                Button {
-                    id: start_stop_id
-                    background: Rectangle {
-                        color: running ? "lightcoral" : "lightgreen"
-                        radius: 10
-                        border.color: running ? "red" : "green"
-                        border.width: 2
-                    }
+                id: date_selection
+                anchors.left: parent.left
+                anchors.right: parent.right
 
-                    contentItem: Text {
-                        text: running ? "Stop" : "Start"
-                        color: running ? "darkred" : "darkgreen"
+                Label {
+                    id: date_label
+                    text: "Date"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.topMargin: 50
+                }
+                DatePicker {
+                    id: date_field
+                    anchors.top: date_label.bottom
+                    width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
+                    height: units.gu(10)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    minimum: {
+                        var d = new Date();
+                        d.setFullYear(d.getFullYear() - 1);
+                        return d;
                     }
-                    visible: isManualTime ? false : true
+                    maximum: Date.prototype.getInvalidDate.call()
+                }
 
-                    onClicked: {
-                        if (running) {
-                            currentTime = false;
-                            storedElapsedTime = elapsedTime;
-                            stopwatchTimer.stop();
-                        } else {
-                            currentTime = new Date()
-                            
-                            stopwatchTimer.start();
-                        }
-                        running = !running
-                        if (taskssmartBtn != null) {
-                            timestart = true
-                            idstarttime = selectedTaskId
+                Label {
+                    id: project_label
+                    text: "Project"
+                    anchors.topMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: date_field.bottom
+                }
+
+                ComboButton {
+                    id: project_field
+                    text: "Select Project"
+                    width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: project_label.bottom
+                    ListView {
+                        id: list
+
+                        model: projectModel
+                        delegate: ItemDelegate {
+                            id: projectInfo 
+                            width: parent.width
+                            text: model.name
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    project_field.text = model.name
+                                    selectedProjectId = model.id
+                                    prepare_task_list(selectedProjectId)
+                                }
+                            }
                         }
                     }
                 }
 
-                Button {
-                    anchors.left: start_stop_id.right
-                    anchors.leftMargin: 10
-                    id: reset_button
-                    background: Rectangle {
-                        color: "#121944"
-                        radius: 10
-                        border.color: "#87ceeb"
-                        border.width: 2
+                Label {
+                    id: task_label
+                    text: "Task"
+                    anchors.topMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: project_field.bottom
+                }
+                ComboButton {
+                    id: task_field
+                    text: "Select Task"
+                    width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: task_label.bottom
+                    ListView {
+                        id: task_list
+                        // width: 18
+
+                        model: taskModel
+                        delegate: ItemDelegate {
+                            id: taskInfo
+                            width: parent.width 
+                            text: model.name
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    task_field.text = model.name
+                                    selectedTaskId = model.id
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Label {
+                    id: description_label
+                    text: "Description"
+                    anchors.topMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: task_field.bottom
+                }
+                TextField {
+                    id: description_field
+                    width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: description_label.bottom
+                }
+
+                Label {
+                    id: spent_hours_label
+                    text: "Spent Hours"
+                    anchors.topMargin: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: description_field.bottom
+                }
+
+                TextField {
+                    id: spent_hours_auto_field
+                    width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: spent_hours_label.bottom
+                    text: formatTime(elapsedTime)
+                    readOnly: true
+                    visible: !isManualTime
+                    validator: RegExpValidator { regExp: /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/ }
+                }
+
+                TextField {
+                    id: spent_hours_manual_field
+                    width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(30) : units.gu(60)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: spent_hours_label.bottom
+                    text: formatTime(elapsedTime)
+                    visible: isManualTime
+                    validator: RegExpValidator { regExp: /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/ }
+                }
+
+                Rectangle {
+                    id: buttons
+                    anchors.top: spent_hours_manual_field.bottom
+                    anchors.topMargin: 30
+                    anchors.left: spent_hours_manual_field.left
+                    Button {
+                        id: start_stop_id
+                        background: Rectangle {
+                            color: running ? "lightcoral" : "lightgreen"
+                            radius: 10
+                            border.color: running ? "red" : "green"
+                            border.width: 2
+                        }
+
+                        contentItem: Text {
+                            text: running ? "Stop" : "Start"
+                            color: running ? "darkred" : "darkgreen"
+                        }
+                        visible: isManualTime ? false : true
+
+                        onClicked: {
+                            if (running) {
+                                currentTime = false;
+                                storedElapsedTime = elapsedTime;
+                                stopwatchTimer.stop();
+                            } else {
+                                currentTime = new Date()
+                                
+                                stopwatchTimer.start();
+                            }
+                            running = !running
+                            if (taskssmartBtn != null) {
+                                timestart = true
+                                idstarttime = selectedTaskId
+                            }
+                        }
                     }
 
-                    contentItem: Text {
+                    Button {
+                        anchors.left: start_stop_id.right
+                        anchors.leftMargin: 10
+                        id: reset_button
+                        background: Rectangle {
+                            color: "#121944"
+                            radius: 10
+                            border.color: "#87ceeb"
+                            border.width: 2
+                        }
+
+                        contentItem: Text {
+                            text: "Reset"
+                            color: "#ffffff"
+                        }
+                        visible: isManualTime? false : true
+
                         text: "Reset"
-                        color: "#ffffff"
+                        onClicked: {
+                            currentTime = false;
+                            stopwatchTimer.stop();
+                            elapsedTime = 0;
+                            storedElapsedTime = 0;
+                            running = false;
+                            if (timestart) {
+                                timestart = false
+                                idstarttime = 0
+                            }
+                        }
                     }
-                    visible: isManualTime? false : true
+                    Button {
+                        anchors.left: reset_button.right
+                        anchors.leftMargin: 10
+                        background: Rectangle {
+                            color: "#121944"
+                            radius: 10
+                            border.color: "#87ceeb"
+                            border.width: 2
+                        }
 
-                    text: "Reset"
-                    onClicked: {
-                        currentTime = false;
-                        stopwatchTimer.stop();
-                        elapsedTime = 0;
-                        storedElapsedTime = 0;
-                        running = false;
-                        if (timestart) {
-                            timestart = false
-                            idstarttime = 0
+                        contentItem: Text {
+                            text: isManualTime ? "Auto" : "Manual"
+                            color: "#ffffff"
+                        }
+
+                        text: "Reset"
+                        onClicked: {
+                            stopwatchTimer.stop();
+                            elapsedTime = 0;
+                            running = false;
+                            storedElapsedTime = 0
+                            spent_hours_manual_field.text = ""
+                            isManualTime = !isManualTime
+                            if (timestart) {
+                                timestart = false
+                                idstarttime = 0
+                            }
                         }
                     }
                 }
-                Button {
-                    anchors.left: reset_button.right
-                    anchors.leftMargin: 10
-                    background: Rectangle {
-                        color: "#121944"
-                        radius: 10
-                        border.color: "#87ceeb"
-                        border.width: 2
-                    }
 
-                    contentItem: Text {
-                        text: isManualTime ? "Auto" : "Manual"
-                        color: "#ffffff"
-                    }
-
-                    text: "Reset"
-                    onClicked: {
-                        stopwatchTimer.stop();
-                        elapsedTime = 0;
-                        running = false;
-                        storedElapsedTime = 0
-                        spent_hours_manual_field.text = ""
-                        isManualTime = !isManualTime
-                        if (timestart) {
-                            timestart = false
-                            idstarttime = 0
-                        }
-                    }
-                }
             }
-
         }
     }
     
     Component.onCompleted: {
-        issearchHeadermain = false;
         prepare_project_list()
     }
 }
