@@ -14,11 +14,12 @@ Dialog {
         anchors.fill: parent
         anchors.topMargin: units.gu(5)
         model: ListModel {
-            ListElement { title: "Home"; icon: "view-dashboard"; }
+            ListElement { title: "Home"; icon: "home"; }
             ListElement { title: "Timesheet"; icon: "clock"; }
-            ListElement { title: "Projects"; icon: "folder"; }
-            ListElement { title: "Tasks"; icon: "format-list-bulleted"; }
             ListElement { title: "Activities"; icon: "calendar"; }
+            ListElement { title: "Tasks"; icon: "view-list-symbolic"; }
+            ListElement { title: "Projects"; icon: "folder-symbolic"; }
+            ListElement { title: "Settings"; icon: "settings"; }
         }
 
         delegate: Item {
@@ -41,7 +42,18 @@ Dialog {
 
             Row {
                 spacing: units.gu(2)
-                anchors.centerIn: parent
+                // anchors.centerIn: parent
+                anchors.verticalCenter: parent.verticalCenter
+                Rectangle {
+                    width: units.gu(1)  // Adds left space
+                    height: 1
+                    color: "transparent"
+                }
+                Icon {
+                    name: model.icon
+                    width: units.gu(3)
+                    height: units.gu(3)
+                }
                 Label {
                     text: model.title
                     font.bold: true

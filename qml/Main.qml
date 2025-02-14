@@ -155,7 +155,8 @@ MainView {
                         Component.onCompleted: {
                             DbInit.initializeDatabase();
                             DemoData.record_demo_data();
-                            var quadrant_data = Model.get_quadrant_difference();
+                            // var quadrant_data = Model.get_quadrant_difference();
+                            var quadrant_data = Model.get_quadrant_current_week()
                             console.log('\n\n quadrant_data', quadrant_data)
                             chart.timecat = quadrant_data;
                         }

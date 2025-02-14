@@ -34,6 +34,7 @@ Page {
     property bool isBottomEdge: false
     property var taskssmartBtn: null
     property int elapsedTime: 0
+    property int selectedquadrantId: 4
     property int selectedProjectId: 0
     property int selectedTaskId: 0 
     property bool running: false
@@ -188,8 +189,6 @@ Page {
         }
     }
 
-    
-
     Rectangle {
         width: Screen.desktopAvailableWidth < units.gu(130) ? units.gu(45) : units.gu(130)
         height: parent.height
@@ -201,6 +200,7 @@ Page {
         Flickable {
             id: flickableContent
             anchors.fill: parent
+            // height: date_selection.height
             height: parent.height - pageHeader.height
             anchors.top: pageHeader.bottom
             contentWidth: parent.width
@@ -346,22 +346,32 @@ Page {
                 Rectangle {
                     id: buttons
                     anchors.top: spent_hours_manual_field.bottom
-                    anchors.topMargin: 30
-                    anchors.left: spent_hours_manual_field.left
+                    width: Screen.desktopAvailableWidth < units.gu(250) ? units.gu(18) : units.gu(60)
+                    height: units.gu(5)
+                    anchors.topMargin: 20
+                    anchors.horizontalCenter: parent.horizontalCenter
                     Button {
                         id: start_stop_id
+                        width: units.gu(5)   // Set explicit button size
+                        height: units.gu(5)
+
                         background: Rectangle {
-                            color: running ? "lightcoral" : "lightgreen"
-                            radius: 10
-                            border.color: running ? "red" : "green"
-                            border.width: 2
+                            color: "transparent"  // Remove the grey background
                         }
 
-                        contentItem: Text {
-                            text: running ? "Stop" : "Start"
-                            color: running ? "darkred" : "darkgreen"
+                        contentItem: Item {
+                            width: parent.width
+                            height: parent.height
+
+                            Icon {
+                                anchors.centerIn: parent
+                                name: running ? "media-playback-pause" : "media-playback-start"
+                                width: units.gu(5)  // Adjust icon size
+                                height: units.gu(5)
+                            }
                         }
-                        visible: isManualTime ? false : true
+
+                        visible: !isManualTime
 
                         onClicked: {
                             if (running) {
@@ -383,18 +393,26 @@ Page {
 
                     Button {
                         anchors.left: start_stop_id.right
-                        anchors.leftMargin: 10
+                        anchors.leftMargin: 30
                         id: reset_button
+                        width: units.gu(5)   // Set explicit button size
+                        height: units.gu(5)
+
                         background: Rectangle {
-                            color: "#121944"
-                            radius: 10
-                            border.color: "#87ceeb"
-                            border.width: 2
+                            color: "transparent"  // Remove the grey background
                         }
 
-                        contentItem: Text {
-                            text: "Reset"
-                            color: "#ffffff"
+
+                        contentItem: Item {
+                            width: parent.width
+                            height: parent.height
+
+                            Icon {
+                                anchors.centerIn: parent
+                                name: "reset"
+                                width: units.gu(5)  // Adjust icon size
+                                height: units.gu(5)
+                            }
                         }
                         visible: isManualTime? false : true
 
@@ -413,18 +431,26 @@ Page {
                     }
                     Button {
                         anchors.left: reset_button.right
-                        anchors.leftMargin: 10
+                        anchors.leftMargin: 30
+                        width: units.gu(5)   // Set explicit button size
+                        height: units.gu(5)
+
                         background: Rectangle {
-                            color: "#121944"
-                            radius: 10
-                            border.color: "#87ceeb"
-                            border.width: 2
+                            color: "transparent"  // Remove the grey background
                         }
 
-                        contentItem: Text {
-                            text: isManualTime ? "Auto" : "Manual"
-                            color: "#ffffff"
+                        contentItem: Item {
+                            width: parent.width
+                            height: parent.height
+
+                            Icon {
+                                anchors.centerIn: parent
+                                name: isManualTime ? "reset" : "edit"
+                                width: units.gu(5)  // Adjust icon size
+                                height: units.gu(5)
+                            }
                         }
+
 
                         text: "Reset"
                         onClicked: {
@@ -441,7 +467,29 @@ Page {
                         }
                     }
                 }
-
+                Label {
+                    id: quadrant_label
+                    text: "Select Priority Quadrant"
+                    anchors.topMargin: 20
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: buttons.bottom
+                }
+                Rectangle {
+                    id: quadrant_selection
+                    anchors.top: quadrant_label.bottom
+                    Rectangle {
+                        id: first_panel_quadrant
+                        RadioButton {
+                            checked: selectedquadrantId === 1
+                            onClicked: selectedquadrantId = 1
+                        }
+                        Text {
+                            text: "Important, Urgent (1)"
+                            // font.pixelSize: isDesktop() ? 18 : phoneLarg() ? 30 : 30
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
             }
         }
     }
